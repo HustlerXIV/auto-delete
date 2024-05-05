@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/HustlerXIV/auto-delete/static/css/main.5ab7edbd.css",
+    "main.js": "/HustlerXIV/auto-delete/static/js/main.59a23e22.js",
+    "index.html": "/HustlerXIV/auto-delete/index.html",
+    "main.5ab7edbd.css.map": "/HustlerXIV/auto-delete/static/css/main.5ab7edbd.css.map",
+    "main.59a23e22.js.map": "/HustlerXIV/auto-delete/static/js/main.59a23e22.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.5ab7edbd.css",
+    "static/js/main.59a23e22.js"
+  ]
+}
