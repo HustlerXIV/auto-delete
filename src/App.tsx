@@ -2,6 +2,8 @@ import React from "react";
 import "./App.css";
 import { data as initialData } from "./utils/data";
 import CustomBtn from "./components/common/CustomBtn/CustomBtn";
+import { get } from "./middleware/apiService";
+import { GroupedByDepartment } from "./utils/user";
 
 const MAINLIST = "Mainlist";
 const FRUIT = "Fruit";
@@ -12,16 +14,20 @@ interface Item {
   name: string;
 }
 
+interface TimeoutItem {
+  item: Item;
+  id: NodeJS.Timeout;
+}
+
 function App() {
+  const [data, setData] = React.useState<any>(null);
   const [fruitBasket, setFruitBasket] = React.useState<Item[]>([]);
   const [vegetBasket, setVegetBasket] = React.useState<Item[]>([]);
   const [mainList, setMainList] = React.useState<Item[]>(initialData);
-  let timeoutId: NodeJS.Timeout | null = null;
+  const timeoutsRef = React.useRef<TimeoutItem[]>([]);
 
   const handleRemove = (item: Item) => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
+    clearTimeouts(item);
     if (item.type === FRUIT) {
       setFruitBasket((prevFruit) =>
         prevFruit.filter((f) => f.name !== item.name)
@@ -32,7 +38,6 @@ function App() {
         prevVeget.filter((v) => v.name !== item.name)
       );
     }
-
     setMainList((prevMainList) => {
       const existingItem = prevMainList.find((d) => d === item);
       return existingItem ? prevMainList : [...prevMainList, item];
@@ -40,18 +45,34 @@ function App() {
   };
 
   const handleAdd = (item: Item) => {
+    clearTimeouts(item);
     if (item.type === FRUIT) {
       setFruitBasket((prevFruit) => [...prevFruit, item]);
     }
     if (item.type === VEGETABLE) {
       setVegetBasket((prevVeget) => [...prevVeget, item]);
     }
-
     setMainList((prevMainList) => prevMainList.filter((d) => d !== item));
 
-    timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       handleRemove(item);
     }, 5000);
+    timeoutsRef.current.push({ item, id: timeoutId });
+  };
+
+  const clearTimeouts = (item?: Item) => {
+    if (item) {
+      const index = timeoutsRef.current.findIndex((t) => t.item === item);
+      if (index !== -1) {
+        clearTimeout(timeoutsRef.current[index].id);
+        timeoutsRef.current.splice(index, 1);
+      }
+    } else {
+      timeoutsRef.current.forEach((t) => {
+        clearTimeout(t.id);
+      });
+      timeoutsRef.current = [];
+    }
   };
 
   const renderItems = (items: Item[], catalog: string) => {
@@ -77,14 +98,35 @@ function App() {
     );
   };
 
+  const fetchUser = async () => {
+    try {
+      const responseData: any = await get("users");
+      const formatedData = GroupedByDepartment(responseData);
+      setData(formatedData);
+    } catch (error) {
+      console.log("Error:", error);
+    }
+
+    alert("ดูข้อมูล Users ได้ที่ Console");
+  };
+
+  React.useEffect(() => {
+    console.log("Users:", data);
+  }, [data]);
+
   return (
-    <div className="main-container">
-      <div className="button-box responsive-container">
-        {renderItems(mainList, MAINLIST)}
+    <>
+      <div className="button-container">
+        <CustomBtn text="Fetch User" onClick={fetchUser} />
       </div>
-      {renderBasket(fruitBasket, FRUIT)}
-      {renderBasket(vegetBasket, VEGETABLE)}
-    </div>
+      <div className="main-container">
+        <div className="button-box responsive-container">
+          {renderItems(mainList, MAINLIST)}
+        </div>
+        {renderBasket(fruitBasket, FRUIT)}
+        {renderBasket(vegetBasket, VEGETABLE)}
+      </div>
+    </>
   );
 }
 
